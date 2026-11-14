@@ -9,6 +9,10 @@ Interactive web game for NASA Space Apps Challenge. Formulate a mission, tune 4 
 - Tailwind CSS 3
 - Tone.js (telemetry audio)
 
+## Сloud hosting
+
+https://from-idea-to-orbit-bjqs.onrender.com/
+
 ## Run locally
 
 ```bash
