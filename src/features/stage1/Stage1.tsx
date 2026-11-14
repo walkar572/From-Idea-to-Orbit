@@ -1,7 +1,7 @@
 import { useGame } from '../../context/GameContext';
 import { NASA_MISSIONS } from '../../data/missions';
 import type { SMD } from '../../types';
-import { MissionCard } from '../../../MissionCard';
+import { MissionCard } from './MissionCard';
 
 const FILTERS: { key: SMD; label: string }[] = [
     { key: 'ALL', label: 'All Missions (4)' },
