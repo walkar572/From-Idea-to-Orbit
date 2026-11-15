@@ -11,6 +11,7 @@ export function VerificationMatrix({ ev }: { ev: ArchitectureEval }) {
         { label: '7. User Segment Lab Readiness', val: ev.userOk ? 'Aligned' : 'Mismatched Pipeline', ok: ev.userOk },
         { label: '8. NASA SMD Cost Cap Compliance', val: `$${ev.totalCost}M / $${ev.m.budgetLimit}M`, ok: ev.budgetOk },
         { label: '9. Radiation Shielding vs Environment Hazard', val: `${ev.bus.shielding}% / ${ev.m.radHazard}% req`, ok: ev.shieldOk },
+        { label: '10. Launch Vehicle Orbit Compatibility', val: ev.launchOk ? 'Compatible' : 'Non-optimal Profile', ok: ev.launchOk },
     ];
 
     const pillClass =

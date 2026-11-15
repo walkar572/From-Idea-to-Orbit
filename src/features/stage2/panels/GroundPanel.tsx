@@ -1,5 +1,6 @@
 import { useGame } from '../../../context/GameContext';
 import { SEGMENTS_DB } from '../../../data/modules';
+import { GROUND_EFF_MIN } from '../../../engine/systemsEngineering';
 import type { ArchitectureEval } from '../../../types';
 
 export function GroundPanel({ ev }: { ev: ArchitectureEval }) {
@@ -27,15 +28,18 @@ export function GroundPanel({ ev }: { ev: ArchitectureEval }) {
             <div className="grid grid-cols-1 gap-3">
                 {SEGMENTS_DB.groundSegments.map(gs => {
                     const active = gs.id === state.groundId;
-                    const effPct = Math.round((gs.efficiency[m.id] || 0.5) * 100);
+                    const eff = gs.efficiency[m.id];
+                    const effPct = Math.round(eff * 100);
                     return (
-                        <div
+                        <button
+                            type="button"
                             key={gs.id}
+                            aria-pressed={active}
                             onClick={() => {
                                 playTone(680);
                                 dispatch({ type: 'SET_GROUND', id: gs.id });
                             }}
-                            className={`p-4 rounded-xl border transition cursor-pointer ${
+                            className={`w-full text-left p-4 rounded-xl border transition cursor-pointer ${
                                 active
                                     ? 'border-blue-500 bg-blue-950/40 glow-cyan'
                                     : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
@@ -47,7 +51,7 @@ export function GroundPanel({ ev }: { ev: ArchitectureEval }) {
                                     <span className="text-blue-400 font-bold">Cost: ${gs.cost}M</span>
                                     <span
                                         className={`px-2.5 py-0.5 rounded font-bold ${
-                                            effPct >= 95
+                                            eff >= GROUND_EFF_MIN
                                                 ? 'bg-blue-500/20 text-blue-300'
                                                 : 'bg-red-700/20 text-red-400'
                                         }`}
@@ -57,7 +61,7 @@ export function GroundPanel({ ev }: { ev: ArchitectureEval }) {
                                 </div>
                             </div>
                             <p className="text-xs text-slate-400 mt-2 leading-relaxed">{gs.desc}</p>
-                        </div>
+                        </button>
                     );
                 })}
             </div>

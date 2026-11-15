@@ -1,5 +1,6 @@
 import { useGame } from '../../../context/GameContext';
 import { SEGMENTS_DB } from '../../../data/modules';
+import { effectiveWatts } from '../../../engine/systemsEngineering';
 import type { ArchitectureEval } from '../../../types';
 
 export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
@@ -38,10 +39,12 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                         const active = pr.id === state.propulsionId;
                         const match = pr.bestFor.includes(m.id);
                         return (
-                            <div
+                            <button
+                                type="button"
                                 key={pr.id}
+                                aria-pressed={active}
                                 onClick={() => setChoice('SET_PROPULSION', pr.id)}
-                                className={`p-3 rounded-xl border-2 transition cursor-pointer ${
+                                className={`w-full text-left p-3 rounded-xl border-2 transition cursor-pointer ${
                                     active
                                         ? 'border-blue-500 bg-blue-950/40'
                                         : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
@@ -62,7 +65,7 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                                         {match ? '★ Optimal Trajectory' : 'Sub-optimal Delta-V'}
                                     </span>
                                 </div>
-                            </div>
+                            </button>
                         );
                     })}
                 </div>
@@ -74,13 +77,15 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {SEGMENTS_DB.powerOptions.map(pw => {
                         const active = pw.id === state.powerId;
-                        const actualW =
-                            pw.type === 'solar' ? Math.round(pw.baseWatts / (m.au * m.au)) : pw.baseWatts;
+                        const actualW = effectiveWatts(pw, m);
+                        const issOnly = pw.type === 'station' && !m.issHosted;
                         return (
-                            <div
+                            <button
+                                type="button"
                                 key={pw.id}
+                                aria-pressed={active}
                                 onClick={() => setChoice('SET_POWER', pw.id)}
-                                className={`p-3 rounded-xl border-2 transition cursor-pointer ${
+                                className={`w-full text-left p-3 rounded-xl border-2 transition cursor-pointer ${
                                     active
                                         ? 'border-blue-500 bg-blue-950/40'
                                         : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
@@ -92,11 +97,15 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                                         className={`font-mono text-[11px] px-1.5 py-0.5 rounded font-bold ${
                                             actualW >= ev.wattsConsumed
                                                 ? 'bg-blue-500/15 text-blue-300'
-                                                : 'bg-red-700 /15 text-red-400'
+                                                : 'bg-red-700/15 text-red-400'
                                         }`}
-                                        title={`Current load: ${ev.wattsConsumed}W`}
+                                        title={
+                                            issOnly
+                                                ? 'Station power is only available to ISS-hosted payloads'
+                                                : `Current load: ${ev.wattsConsumed}W`
+                                        }
                                     >
-                                        +{actualW}W
+                                        {issOnly ? 'ISS only' : `+${actualW}W`}
                                     </span>
                                 </div>
                                 <p className="text-[11px] text-slate-400 mt-1">{pw.desc}</p>
@@ -105,7 +114,7 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                                     <span>Mass: {pw.mass} kg</span>
                                     <span>At 1 AU: {pw.baseWatts}W</span>
                                 </div>
-                            </div>
+                            </button>
                         );
                     })}
                 </div>
@@ -118,10 +127,12 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                     {SEGMENTS_DB.busOptions.map(b => {
                         const active = b.id === state.busId;
                         return (
-                            <div
+                            <button
+                                type="button"
                                 key={b.id}
+                                aria-pressed={active}
                                 onClick={() => setChoice('SET_BUS', b.id)}
-                                className={`p-3 rounded-xl border-2 transition cursor-pointer ${
+                                className={`w-full text-left p-3 rounded-xl border-2 transition cursor-pointer ${
                                     active
                                         ? 'border-blue-500 bg-blue-950/40'
                                         : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
@@ -144,7 +155,7 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                                     <span className="text-slate-400">Vol: {b.volUsed} u</span>
                                     <span className="text-slate-300">-{b.powerDraw}W</span>
                                 </div>
-                            </div>
+                            </button>
                         );
                     })}
                 </div>
@@ -162,10 +173,12 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                         const isReq = m.requiredPayloads.includes(pl.id);
                         const isCompatible = pl.tag === m.wavelengthReq;
                         return (
-                            <div
+                            <button
+                                type="button"
                                 key={pl.id}
+                                aria-pressed={selected}
                                 onClick={() => togglePayload(pl.id)}
-                                className={`p-3 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between ${
+                                className={`w-full h-full text-left p-3 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between ${
                                     selected
                                         ? 'border-blue-500 bg-blue-950/40 glow-cyan'
                                         : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
@@ -177,16 +190,18 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                                             <i className={`fa-solid ${pl.icon} text-blue-400 mr-1.5`} />
                                             {pl.name}
                                         </span>
-                                        <input
-                                            type="checkbox"
-                                            checked={selected}
-                                            readOnly
-                                            className="pointer-events-none accent-cyan-400 mt-0.5"
+                                        <i
+                                            aria-hidden="true"
+                                            className={`mt-0.5 ${
+                                                selected
+                                                    ? 'fa-solid fa-square-check text-blue-400'
+                                                    : 'fa-regular fa-square text-slate-500'
+                                            }`}
                                         />
                                     </div>
                                     <div className="flex flex-wrap gap-1 mt-1">
                                         {isReq && (
-                                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-red-700 /15 text-red-400 border border-red-500/30 font-bold">
+                                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-red-700/15 text-red-400 border border-red-500/30 font-bold">
                                                 ★ Primary Mission Requirement
                                             </span>
                                         )}
@@ -208,7 +223,7 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                                     <span className="text-slate-400">{pl.vol} u</span>
                                     <span className="text-slate-300">-{pl.power}W</span>
                                 </div>
-                            </div>
+                            </button>
                         );
                     })}
                 </div>

@@ -8,6 +8,7 @@ export const NASA_MISSIONS: Mission[] = [
         smdLabel: 'Biological & Physical Sciences (ISS)',
         name: 'BioNutrients-2: In-Space Nutrient Production on ISS',
         orbitLabel: 'Low Earth Orbit (ISS / LEO, 1.0 AU)',
+        issHosted: true,
         au: 1.0,
         budgetLimit: 86,
         maxVolumeUnit: 300,
@@ -38,8 +39,10 @@ export const NASA_MISSIONS: Mission[] = [
             desc: 'ISS astronauts report that 6 hours have elapsed since sterile water was injected into the FEP production bags containing yeast spores. Per the BioNutrients-2 ConOps protocol (PDF Page 16), select the Ground Control directive:',
             opt1Title: 'AGITATE PRODUCTION BAGS (SHAKE 1 MIN) & RETURN TO 30°C INCUBATOR',
             opt1Desc: 'Ensures uniform media mixing and maximum beta-carotene yield (>=3 ug/mL) prior to MELFI freezing.',
+            opt1Requires: { kind: 'payload', id: 'incubator_melfi' },
             opt2Title: 'IMMEDIATELY TRANSFER TO MELFI FREEZER (-80°C)',
-            opt2Desc: 'Eliminates thermal drift risk, but halts yeast cell growth prematurely (-25% beta-carotene yield).'
+            opt2Desc: 'Eliminates thermal drift risk, but halts yeast cell growth prematurely (-25% beta-carotene yield).',
+            opt2Yield: 0.75
         }
     },
     {
@@ -49,6 +52,7 @@ export const NASA_MISSIONS: Mission[] = [
         smdLabel: 'Heliophysics (SmallSat / CubeSat Fleet)',
         name: 'PUNCH: Polarimeter to Unify the Corona & Heliosphere',
         orbitLabel: 'Sun-Synchronous Low Earth Orbit (LEO Terminator, 1.0 AU)',
+        issHosted: false,
         au: 1.0,
         budgetLimit: 209,
         maxVolumeUnit: 24,
@@ -79,8 +83,10 @@ export const NASA_MISSIONS: Mission[] = [
             desc: 'A fast halo Coronal Mass Ejection has erupted from the Sun toward Earth. This is prime science opportunity, but high proton flux could saturate the CCD polarimeter detectors!',
             opt1Title: 'EXECUTE SYNCHRONIZED 3D POLARIMETRIC CADENCE',
             opt1Desc: 'Maintain continuous imaging across all 4 satellites to reconstruct the 3D CME shockfront (requires >=35% radiation shielding).',
+            opt1Requires: { kind: 'shielding' },
             opt2Title: 'CLOSE OPTICAL SHUTTERS DURING PEAK PROTON FLUX',
-            opt2Desc: 'Guarantees zero sensor degradation, but misses the core CME acceleration phase (-20% science return).'
+            opt2Desc: 'Guarantees zero sensor degradation, but misses the core CME acceleration phase (-20% science return).',
+            opt2Yield: 0.8
         }
     },
     {
@@ -90,6 +96,7 @@ export const NASA_MISSIONS: Mission[] = [
         smdLabel: 'Planetary Science (Main Asteroid Belt)',
         name: 'Dawn: Rendezvous & Orbit of Both Vesta and Ceres',
         orbitLabel: 'Main Asteroid Belt (2.8 AU from Sun)',
+        issHosted: false,
         au: 2.8,
         budgetLimit: 447,
         maxVolumeUnit: 1200,
@@ -120,8 +127,10 @@ export const NASA_MISSIONS: Mission[] = [
             desc: 'After completing Vesta mapping, the spacecraft is spiraling outward toward Ceres (2.8 AU). One reaction wheel shows elevated friction during low-thrust ion firing.',
             opt1Title: 'GIMBAL XENON ION THRUSTER FOR HYBRID ATTITUDE CONTROL',
             opt1Desc: 'Use the ion thruster two-axis gimbal to offload reaction wheels, conserving hydrazine for low-altitude Ceres mapping.',
+            opt1Requires: { kind: 'propulsion', id: 'ion_sep_spiral' },
             opt2Title: 'RAISE CERES MAPPING ORBIT ALTITUDE (SKIP LOW HAMO)',
-            opt2Desc: 'Reduces attitude control demand, but lowers GRaND neutron spectrometer spatial resolution (-15% science).'
+            opt2Desc: 'Reduces attitude control demand, but lowers GRaND neutron spectrometer spatial resolution (-15% science).',
+            opt2Yield: 0.85
         }
     },
     {
@@ -131,6 +140,7 @@ export const NASA_MISSIONS: Mission[] = [
         smdLabel: 'Planetary Science (Flagship Outer Planets)',
         name: 'Europa Clipper: Subsurface Ocean & Habitability',
         orbitLabel: 'Jovian System — Europa Flybys (5.2 AU from Sun)',
+        issHosted: false,
         au: 5.2,
         budgetLimit: 776,
         maxVolumeUnit: 2500,
@@ -161,8 +171,10 @@ export const NASA_MISSIONS: Mission[] = [
             desc: 'The spacecraft dives into intense relativistic electron flux to sound the ice shell with the REASON VHF radar. High-energy particles are bombarding the avionics bay!',
             opt1Title: 'FULL-POWER VHF ICE RADAR SOUNDING BEHIND TITANIUM VAULT',
             opt1Desc: 'If equipped with the Titanium Radiation Vault (>=90% shielding), captures 100% of subsurface ocean-ice interface profiles.',
+            opt1Requires: { kind: 'shielding' },
             opt2Title: 'SAFE MODE HIGH-ALTITUDE FLYBY',
-            opt2Desc: 'Power down the high-wattage ice radar during closest approach to protect avionics (-20% subsurface ocean data).'
+            opt2Desc: 'Power down the high-wattage ice radar during closest approach to protect avionics (-20% subsurface ocean data).',
+            opt2Yield: 0.8
         }
     }
 ];

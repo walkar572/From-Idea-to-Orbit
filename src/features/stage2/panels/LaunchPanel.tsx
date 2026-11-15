@@ -29,13 +29,15 @@ export function LaunchPanel({ ev }: { ev: ArchitectureEval }) {
                     const active = lv.id === state.launchId;
                     const rec = lv.allowedMissions.includes(m.id);
                     return (
-                        <div
+                        <button
+                            type="button"
                             key={lv.id}
+                            aria-pressed={active}
                             onClick={() => {
                                 playTone(680);
                                 dispatch({ type: 'SET_LAUNCH', id: lv.id });
                             }}
-                            className={`p-4 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between ${
+                            className={`w-full h-full text-left p-4 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between ${
                                 active
                                     ? 'border-blue-500 bg-blue-950/40 glow-cyan'
                                     : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
@@ -61,7 +63,7 @@ export function LaunchPanel({ ev }: { ev: ArchitectureEval }) {
                                 <span className="text-blue-400 font-bold">Cost: ${lv.cost}M</span>
                                 <span className="text-blue-300 font-bold">Max Mass: {lv.maxMass} kg</span>
                             </div>
-                        </div>
+                        </button>
                     );
                 })}
             </div>

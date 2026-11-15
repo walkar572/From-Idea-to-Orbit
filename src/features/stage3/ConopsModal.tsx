@@ -9,7 +9,7 @@ export function ConopsModal({ event, onResolve }: Props) {
     return (
         <div className="absolute inset-0 bg-slate-950/92 backdrop-blur-md p-4 sm:p-6 flex flex-col overflow-y-auto z-20">
             <div className="my-auto w-full flex flex-col items-center text-center">
-                <div className="hidden sm:flex w-12 h-12 rounded-full bg-red-700 /20 border border-red-500 items-center justify-center text-red-300 text-xl mb-3">
+                <div className="hidden sm:flex w-12 h-12 rounded-full bg-red-700/20 border border-red-500 items-center justify-center text-red-300 text-xl mb-3">
                     <i className="fa-solid fa-satellite-dish" />
                 </div>
                 <span className="font-mono text-[10px] sm:text-xs uppercase tracking-widest text-blue-400">

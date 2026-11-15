@@ -7,13 +7,20 @@
    export type PowerType = 'station' | 'solar' | 'nuclear';
    export type SMD = 'ALL' | SMDDivision;
    
+   export type ConopsRequirement =
+       | { kind: 'shielding' }
+       | { kind: 'payload'; id: string }
+       | { kind: 'propulsion'; id: string };
+
    export interface ConopsEvent {
        title: string;
        desc: string;
        opt1Title: string;
        opt1Desc: string;
+       opt1Requires: ConopsRequirement;
        opt2Title: string;
        opt2Desc: string;
+       opt2Yield: number;
    }
    
    export interface OptimalPreset {
@@ -33,6 +40,7 @@
        smdLabel: string;
        name: string;
        orbitLabel: string;
+       issHosted: boolean;
        au: number;
        budgetLimit: number;
        maxVolumeUnit: number;
@@ -172,6 +180,7 @@
        incompatiblePayloads: Payload[];
        payloadReqOk: boolean;
    
+       launchOk: boolean;
        trajOk: boolean;
        groundEff: number;
        groundOk: boolean;
