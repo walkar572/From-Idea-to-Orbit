@@ -1,16 +1,15 @@
+import { OptionCard } from '../../../components/ui/OptionCard';
 import { useGame } from '../../../context/GameContext';
 import { SEGMENTS_DB } from '../../../data/modules';
 import { effectiveWatts } from '../../../engine/systemsEngineering';
 import type { ArchitectureEval } from '../../../types';
+import { SegmentPanelHeader } from './SegmentPanelHeader';
+import { useSegmentSelect } from './useSegmentSelect';
 
 export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
     const { state, dispatch, playTone } = useGame();
+    const select = useSegmentSelect();
     const m = ev.m;
-
-    const setChoice = (action: 'SET_PROPULSION' | 'SET_POWER' | 'SET_BUS', id: string) => {
-        playTone(680);
-        dispatch({ type: action, id });
-    };
 
     const togglePayload = (id: string) => {
         playTone(720);
@@ -19,36 +18,25 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
 
     return (
         <>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div>
-                    <span className="font-mono text-[10px] uppercase text-blue-400 block">
-                        SEGMENT 2 OF 4 // SPACE SEGMENT & MDL DISCIPLINES
-                    </span>
-                    <h3 className="text-base font-bold text-white">
-                        Propulsion (GMAT), Power, Structure & Scientific Instruments
-                    </h3>
-                </div>
-                <span className="font-mono text-xs text-red-400">Distance: {m.au} AU</span>
-            </div>
+            <SegmentPanelHeader
+                kicker="SEGMENT 2 OF 4 // SPACE SEGMENT & MDL DISCIPLINES"
+                title="Propulsion (GMAT), Power, Structure & Scientific Instruments"
+                aside={`Distance: ${m.au} AU`}
+                asideClassName="text-red-400"
+            />
             <div className="space-y-2">
                 <label className="font-mono text-xs font-bold text-blue-300 uppercase block">
                     2A. GMAT Trajectory & Propulsion Subsystem:
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {SEGMENTS_DB.propulsionOptions.map(pr => {
-                        const active = pr.id === state.propulsionId;
                         const match = pr.bestFor.includes(m.id);
                         return (
-                            <button
-                                type="button"
+                            <OptionCard
                                 key={pr.id}
-                                aria-pressed={active}
-                                onClick={() => setChoice('SET_PROPULSION', pr.id)}
-                                className={`w-full text-left p-3 rounded-xl border-2 transition cursor-pointer ${
-                                    active
-                                        ? 'border-blue-500 bg-blue-950/40'
-                                        : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
-                                }`}
+                                selected={pr.id === state.propulsionId}
+                                onSelect={() => select('propulsionId', pr.id)}
+                                className="p-3 border-2"
                             >
                                 <div className="flex items-center justify-between">
                                     <span className="font-bold text-white text-xs">{pr.name}</span>
@@ -65,7 +53,7 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                                         {match ? '★ Optimal Trajectory' : 'Sub-optimal Delta-V'}
                                     </span>
                                 </div>
-                            </button>
+                            </OptionCard>
                         );
                     })}
                 </div>
@@ -76,20 +64,14 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {SEGMENTS_DB.powerOptions.map(pw => {
-                        const active = pw.id === state.powerId;
                         const actualW = effectiveWatts(pw, m);
                         const issOnly = pw.type === 'station' && !m.issHosted;
                         return (
-                            <button
-                                type="button"
+                            <OptionCard
                                 key={pw.id}
-                                aria-pressed={active}
-                                onClick={() => setChoice('SET_POWER', pw.id)}
-                                className={`w-full text-left p-3 rounded-xl border-2 transition cursor-pointer ${
-                                    active
-                                        ? 'border-blue-500 bg-blue-950/40'
-                                        : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
-                                }`}
+                                selected={pw.id === state.powerId}
+                                onSelect={() => select('powerId', pw.id)}
+                                className="p-3 border-2"
                             >
                                 <div className="flex items-center justify-between">
                                     <span className="font-bold text-white text-xs">{pw.name}</span>
@@ -114,7 +96,7 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                                     <span>Mass: {pw.mass} kg</span>
                                     <span>At 1 AU: {pw.baseWatts}W</span>
                                 </div>
-                            </button>
+                            </OptionCard>
                         );
                     })}
                 </div>
@@ -124,40 +106,32 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                     2C. Spacecraft Bus, Volume & Radiation Shielding (Target Hazard: {m.radHazard}%):
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {SEGMENTS_DB.busOptions.map(b => {
-                        const active = b.id === state.busId;
-                        return (
-                            <button
-                                type="button"
-                                key={b.id}
-                                aria-pressed={active}
-                                onClick={() => setChoice('SET_BUS', b.id)}
-                                className={`w-full text-left p-3 rounded-xl border-2 transition cursor-pointer ${
-                                    active
-                                        ? 'border-blue-500 bg-blue-950/40'
-                                        : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
-                                }`}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <span className="font-bold text-white text-xs">{b.name}</span>
-                                    <span
-                                        className={`font-mono text-[11px] ${
-                                            b.shielding >= m.radHazard ? 'text-blue-300' : 'text-red-300'
-                                        } font-bold`}
-                                    >
-                                        Shield {b.shielding}%
-                                    </span>
-                                </div>
-                                <p className="text-[11px] text-slate-400 mt-1">{b.desc}</p>
-                                <div className="flex justify-between mt-2 pt-1.5 border-t border-slate-800/80 font-mono text-[10px] text-slate-300">
-                                    <span className="text-blue-400">${b.cost}M</span>
-                                    <span>{b.mass} kg</span>
-                                    <span className="text-slate-400">Vol: {b.volUsed} u</span>
-                                    <span className="text-slate-300">-{b.powerDraw}W</span>
-                                </div>
-                            </button>
-                        );
-                    })}
+                    {SEGMENTS_DB.busOptions.map(b => (
+                        <OptionCard
+                            key={b.id}
+                            selected={b.id === state.busId}
+                            onSelect={() => select('busId', b.id)}
+                            className="p-3 border-2"
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className="font-bold text-white text-xs">{b.name}</span>
+                                <span
+                                    className={`font-mono text-[11px] ${
+                                        b.shielding >= m.radHazard ? 'text-blue-300' : 'text-red-300'
+                                    } font-bold`}
+                                >
+                                    Shield {b.shielding}%
+                                </span>
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-1">{b.desc}</p>
+                            <div className="flex justify-between mt-2 pt-1.5 border-t border-slate-800/80 font-mono text-[10px] text-slate-300">
+                                <span className="text-blue-400">${b.cost}M</span>
+                                <span>{b.mass} kg</span>
+                                <span className="text-slate-400">Vol: {b.volUsed} u</span>
+                                <span className="text-slate-300">-{b.powerDraw}W</span>
+                            </div>
+                        </OptionCard>
+                    ))}
                 </div>
             </div>
             <div className="space-y-2 pt-2 border-t border-slate-800">
@@ -173,16 +147,11 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                         const isReq = m.requiredPayloads.includes(pl.id);
                         const isCompatible = pl.tag === m.wavelengthReq;
                         return (
-                            <button
-                                type="button"
+                            <OptionCard
                                 key={pl.id}
-                                aria-pressed={selected}
-                                onClick={() => togglePayload(pl.id)}
-                                className={`w-full h-full text-left p-3 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between ${
-                                    selected
-                                        ? 'border-blue-500 bg-blue-950/40 glow-cyan'
-                                        : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
-                                }`}
+                                selected={selected}
+                                onSelect={() => togglePayload(pl.id)}
+                                className="h-full p-3 border-2 flex flex-col justify-between"
                             >
                                 <div>
                                     <div className="flex items-start justify-between gap-2">
@@ -223,7 +192,7 @@ export function SpacePanel({ ev }: { ev: ArchitectureEval }) {
                                     <span className="text-slate-400">{pl.vol} u</span>
                                     <span className="text-slate-300">-{pl.power}W</span>
                                 </div>
-                            </button>
+                            </OptionCard>
                         );
                     })}
                 </div>

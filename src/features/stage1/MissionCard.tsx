@@ -1,4 +1,5 @@
 import { useGame } from '../../context/GameContext';
+import { solarFluxPct } from '../../engine/systemsEngineering';
 import type { Mission } from '../../types';
 
 interface MissionCardProps {
@@ -8,7 +9,7 @@ interface MissionCardProps {
 
 export function MissionCard({ mission: m, selected }: MissionCardProps) {
     const { dispatch, playTone } = useGame();
-    const solarFluxPct = Math.round(100 / (m.au * m.au));
+    const fluxPct = solarFluxPct(m.au);
 
     const onClick = () => {
         playTone(760);
@@ -67,7 +68,7 @@ export function MissionCard({ mission: m, selected }: MissionCardProps) {
                     </div>
                     <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
                         <span className="text-[10px] text-slate-400 block">SOLAR FLUX (1/R²)</span>
-                        <span className="text-slate-300 font-bold">{solarFluxPct}% ({m.au} AU)</span>
+                        <span className="text-slate-300 font-bold">{fluxPct}% ({m.au} AU)</span>
                     </div>
                     <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
                         <span className="text-[10px] text-slate-400 block">VOLUME LIMIT</span>

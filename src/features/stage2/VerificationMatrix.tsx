@@ -1,24 +1,7 @@
+import { cmlBadgeClass } from '../../components/ui/classes';
 import type { ArchitectureEval } from '../../types';
 
 export function VerificationMatrix({ ev }: { ev: ArchitectureEval }) {
-    const rows = [
-        { label: '1. Mass Verification (Pre-launch Weighing)', val: `${ev.totalMass} / ${ev.launch.maxMass} kg`, ok: ev.massOk },
-        { label: `2. Volume & Envelope Verification (${ev.m.volUnitLabel})`, val: `${ev.totalVol} / ${ev.maxAllowedVol} u`, ok: ev.volOk },
-        { label: `3. Power Balance at ${ev.m.au} AU (1/R² Law)`, val: `${ev.wattsGenerated}W gen vs ${ev.wattsConsumed}W load`, ok: ev.powerOk },
-        { label: '4. Instrument & Spectral Compatibility (Goals)', val: ev.payloadReqOk ? 'All Required Verified' : 'Missing / Wrong Spectrum', ok: ev.payloadReqOk },
-        { label: '5. GMAT Trajectory & Delta-V Budget', val: `${ev.prop.dvProvided} km/s`, ok: ev.trajOk },
-        { label: '6. Ground Segment Downlink Capacity', val: `${Math.round(ev.groundEff * 100)}% link`, ok: ev.groundOk },
-        { label: '7. User Segment Lab Readiness', val: ev.userOk ? 'Aligned' : 'Mismatched Pipeline', ok: ev.userOk },
-        { label: '8. NASA SMD Cost Cap Compliance', val: `$${ev.totalCost}M / $${ev.m.budgetLimit}M`, ok: ev.budgetOk },
-        { label: '9. Radiation Shielding vs Environment Hazard', val: `${ev.bus.shielding}% / ${ev.m.radHazard}% req`, ok: ev.shieldOk },
-        { label: '10. Launch Vehicle Orbit Compatibility', val: ev.launchOk ? 'Compatible' : 'Non-optimal Profile', ok: ev.launchOk },
-    ];
-
-    const pillClass =
-        ev.cmlLevel === 4
-            ? 'bg-blue-500/30 text-blue-200 border-blue-400/60'
-            : 'bg-slate-700/60 text-slate-300 border-slate-600';
-
     return (
         <div className="glass-panel rounded-lg p-5 border border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
@@ -29,7 +12,7 @@ export function VerificationMatrix({ ev }: { ev: ArchitectureEval }) {
                     <h3 className="font-bold text-white text-sm uppercase font-mono">Requirements Verification Matrix</h3>
                 </div>
                 <span
-                    className={`text-xs font-mono px-2.5 py-1 rounded border font-bold ${pillClass}`}
+                    className={`text-xs font-mono px-2.5 py-1 rounded border font-bold ${cmlBadgeClass(ev.cmlLevel)}`}
                 >
                     JPL CML {ev.cmlLevel} ({ev.checksPassed}/{ev.totalChecks} OK)
                 </span>
@@ -44,9 +27,9 @@ export function VerificationMatrix({ ev }: { ev: ArchitectureEval }) {
             </p>
 
             <div className="space-y-2 text-xs font-mono">
-                {rows.map((r, i) => (
+                {ev.checks.map((r, i) => (
                     <div
-                        key={i}
+                        key={r.id}
                         className={`flex items-center justify-between p-2 rounded-lg border ${
                             r.ok
                                 ? 'bg-slate-900/80 border-slate-800 text-slate-200'
@@ -59,10 +42,12 @@ export function VerificationMatrix({ ev }: { ev: ArchitectureEval }) {
                                     r.ok ? 'fa-circle-check text-blue-400' : 'fa-triangle-exclamation text-red-500'
                                 }`}
                             />
-                            <span className="truncate">{r.label}</span>
+                            <span className="truncate">
+                                {i + 1}. {r.label}
+                            </span>
                         </div>
                         <span className={`font-bold shrink-0 ${r.ok ? 'text-blue-300' : 'text-red-700'}`}>
-                            {r.val}
+                            {r.value}
                         </span>
                     </div>
                 ))}

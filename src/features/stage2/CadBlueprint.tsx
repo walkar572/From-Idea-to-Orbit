@@ -1,4 +1,6 @@
+import { StatCell } from '../../components/ui/StatCell';
 import type { ArchitectureEval } from '../../types';
+import { firstWord } from '../../utils/format';
 
 export function CadBlueprint({ ev }: { ev: ArchitectureEval }) {
     const { m } = ev;
@@ -43,7 +45,7 @@ export function CadBlueprint({ ev }: { ev: ArchitectureEval }) {
             </svg>
         );
     } else {
-        const isRtg = ev.power.id === 'rtg_mmrtg';
+        const isRtg = ev.power.type === 'nuclear';
         const hasRadar = ev.selectedPayloadObjs.some(p => p.id === 'ice_radar_reason');
         const vaultStroke = ev.bus.id === 'bus_titanium_vault' ? '#f59e0b' : '#00f0ff';
         svg = (
@@ -100,20 +102,15 @@ export function CadBlueprint({ ev }: { ev: ArchitectureEval }) {
             <div className="my-auto py-3 flex items-center justify-center">{svg}</div>
 
             <div className="grid grid-cols-4 gap-1.5 pt-2.5 border-t border-slate-700 text-[10px] font-mono">
-                <MiniCell label="LAUNCH SEG" val={ev.launch.name.split(' ')[0]} color="text-blue-300" />
-                <MiniCell label="SPACE SEG" val={`${ev.bus.name.split(' ')[0]} + ${ev.selectedPayloadObjs.length} inst.`} color="text-blue-300" />
-                <MiniCell label="GROUND SEG" val={ev.ground.name.split(' ')[0]} color="text-red-400" />
-                <MiniCell label="USER SEG" val={ev.user.name.split(':')[0]} color="text-slate-400" />
+                <StatCell label="LAUNCH SEG" value={firstWord(ev.launch.name)} valueClassName="text-blue-300 truncate" />
+                <StatCell
+                    label="SPACE SEG"
+                    value={`${firstWord(ev.bus.name)} + ${ev.selectedPayloadObjs.length} inst.`}
+                    valueClassName="text-blue-300 truncate"
+                />
+                <StatCell label="GROUND SEG" value={firstWord(ev.ground.name)} valueClassName="text-red-400 truncate" />
+                <StatCell label="USER SEG" value={ev.user.name.split(':')[0]} valueClassName="text-slate-400 truncate" />
             </div>
-        </div>
-    );
-}
-
-function MiniCell({ label, val, color }: { label: string; val: string; color: string }) {
-    return (
-        <div className="bg-slate-950/85 p-2 rounded border border-slate-800">
-            <span className="text-slate-500 block">{label}</span>
-            <span className={`${color} font-bold truncate block`}>{val}</span>
         </div>
     );
 }

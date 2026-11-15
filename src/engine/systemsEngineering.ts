@@ -1,13 +1,42 @@
 import { NASA_MISSIONS } from '../data/missions';
 import { SEGMENTS_DB } from '../data/modules';
-import type { ArchitectureEval, GameState, Mission, PowerOption } from '../types';
+import type {
+    ArchitectureEval,
+    CmlLevel,
+    GameState,
+    Mission,
+    MissionConfig,
+    MissionId,
+    Payload,
+    PowerOption,
+    VerificationCheck,
+} from '../types';
 
 export const GROUND_EFF_MIN = 0.9;
+export const CML3_MIN_CHECKS = 5;
+export const SOLAR_CONSTANT_WM2 = 1361;
+
+export const CML_LABELS: Record<CmlLevel, { cml: string; mdl: string }> = {
+    1: { cml: 'JPL CML 1: Initial Idea', mdl: 'MDL: Office Hours' },
+    2: { cml: 'JPL CML 2: Feasibility Concept', mdl: 'MDL: Concept Development' },
+    3: { cml: 'JPL CML 3: Trade Space Explored', mdl: 'MDL: Trade Studies' },
+    4: { cml: 'JPL CML 4: Point Design Verified', mdl: 'MDL: Point Design Ready' },
+};
+
+const inverseSquare = (au: number) => 1 / (au * au);
+
+export function solarFluxPct(au: number): number {
+    return Math.round(100 * inverseSquare(au));
+}
+
+export function solarFluxWm2(au: number): number {
+    return Math.round(SOLAR_CONSTANT_WM2 * inverseSquare(au));
+}
 
 export function effectiveWatts(power: PowerOption, m: Mission): number {
     switch (power.type) {
         case 'solar':
-            return Math.round(power.baseWatts / (m.au * m.au));
+            return Math.round(power.baseWatts * inverseSquare(m.au));
         case 'station':
             return m.issHosted ? power.baseWatts : 0;
         case 'nuclear':
@@ -15,41 +44,54 @@ export function effectiveWatts(power: PowerOption, m: Mission): number {
     }
 }
 
-export function getMission(state: GameState): Mission {
-    const m = NASA_MISSIONS.find(x => x.id === state.missionId);
-    if (!m) throw new Error(`Unknown mission: ${state.missionId}`);
+export function getMission(missionId: MissionId): Mission {
+    const m = NASA_MISSIONS.find(x => x.id === missionId);
+    if (!m) throw new Error(`Unknown mission: ${missionId}`);
     return m;
 }
 
-export function evaluateArchitecture(state: GameState): ArchitectureEval {
-    const m = getMission(state);
-    const launch = SEGMENTS_DB.launchVehicles.find(x => x.id === state.launchId);
-    const prop = SEGMENTS_DB.propulsionOptions.find(x => x.id === state.propulsionId);
-    const power = SEGMENTS_DB.powerOptions.find(x => x.id === state.powerId);
-    const bus = SEGMENTS_DB.busOptions.find(x => x.id === state.busId);
-    const ground = SEGMENTS_DB.groundSegments.find(x => x.id === state.groundId);
-    const user = SEGMENTS_DB.userSegments.find(x => x.id === state.userId);
+export function getPresetConfig(missionId: MissionId): MissionConfig {
+    const preset = getMission(missionId).optimalPreset;
+    return { ...preset, missionId, payloads: [...preset.payloads] };
+}
 
-    if (!launch || !prop || !power || !bus || !ground || !user) {
-        throw new Error('Invalid architecture: one of the selected segment IDs is unknown.');
-    }
+export function toMissionConfig(state: GameState): MissionConfig {
+    const { missionId, launchId, propulsionId, powerId, busId, payloads, groundId, userId } = state;
+    return { missionId, launchId, propulsionId, powerId, busId, payloads: [...payloads], groundId, userId };
+}
 
-    const selectedPayloadObjs = SEGMENTS_DB.payloads.filter(p => state.payloads.includes(p.id));
-    const payloadCost = selectedPayloadObjs.reduce((s, p) => s + p.cost, 0);
-    const totalCost =launch.cost + prop.cost + power.cost + bus.cost + payloadCost + ground.cost + user.cost;
-    const budgetOk= totalCost <= m.budgetLimit;
-    const payloadMass = selectedPayloadObjs.reduce((s, p) => s + p.mass, 0);
-    const totalMass = +(prop.mass + power.mass + bus.mass + payloadMass).toFixed(1);
+function findById<T extends { id: string }>(items: T[], id: string, kind: string): T {
+    const item = items.find(x => x.id === id);
+    if (!item) throw new Error(`Invalid architecture: unknown ${kind} "${id}".`);
+    return item;
+}
+
+function sumOf(payloads: Payload[], key: 'cost' | 'mass' | 'vol' | 'power'): number {
+    return payloads.reduce((s, p) => s + p[key], 0);
+}
+
+export function evaluateArchitecture(config: MissionConfig): ArchitectureEval {
+    const m = getMission(config.missionId);
+    const launch = findById(SEGMENTS_DB.launchVehicles, config.launchId, 'launch vehicle');
+    const prop = findById(SEGMENTS_DB.propulsionOptions, config.propulsionId, 'propulsion');
+    const power = findById(SEGMENTS_DB.powerOptions, config.powerId, 'power option');
+    const bus = findById(SEGMENTS_DB.busOptions, config.busId, 'bus');
+    const ground = findById(SEGMENTS_DB.groundSegments, config.groundId, 'ground segment');
+    const user = findById(SEGMENTS_DB.userSegments, config.userId, 'user segment');
+    const selectedPayloadObjs = SEGMENTS_DB.payloads.filter(p => config.payloads.includes(p.id));
+
+    const totalCost =
+        launch.cost + prop.cost + power.cost + bus.cost + sumOf(selectedPayloadObjs, 'cost') + ground.cost + user.cost;
+    const budgetOk = totalCost <= m.budgetLimit;
+    const totalMass = +(prop.mass + power.mass + bus.mass + sumOf(selectedPayloadObjs, 'mass')).toFixed(1);
     const massOk = totalMass <= launch.maxMass;
-    const payloadVol = selectedPayloadObjs.reduce((s, p) => s + p.vol, 0);
-    const totalVol = bus.volUsed + payloadVol;
-    const maxAllowedVol = m.maxVolumeUnit + (launch.maxVolBonus || 0);
+    const totalVol = bus.volUsed + sumOf(selectedPayloadObjs, 'vol');
+    const maxAllowedVol = m.maxVolumeUnit + launch.maxVolBonus;
     const volOk = totalVol <= maxAllowedVol;
     const wattsGenerated = effectiveWatts(power, m);
-    const payloadPower = selectedPayloadObjs.reduce((s, p) => s + p.power, 0);
-    const wattsConsumed = bus.powerDraw + payloadPower;
+    const wattsConsumed = bus.powerDraw + sumOf(selectedPayloadObjs, 'power');
     const powerOk = wattsGenerated >= wattsConsumed;
-    const missingReqPayloads = m.requiredPayloads.filter(reqId => !state.payloads.includes(reqId));
+    const missingReqPayloads = m.requiredPayloads.filter(reqId => !config.payloads.includes(reqId));
     const incompatiblePayloads = selectedPayloadObjs.filter(p => p.tag !== m.wavelengthReq);
     const payloadReqOk = missingReqPayloads.length === 0 && incompatiblePayloads.length === 0;
     const launchOk = launch.allowedMissions.includes(m.id);
@@ -58,31 +100,82 @@ export function evaluateArchitecture(state: GameState): ArchitectureEval {
     const groundOk = groundEff >= GROUND_EFF_MIN;
     const userOk = user.bestFor === m.id;
     const shieldOk = bus.shielding >= m.radHazard;
-    const checks = [
-        budgetOk, massOk, volOk, powerOk, payloadReqOk, trajOk, groundOk, userOk, shieldOk, launchOk
+
+    const checks: VerificationCheck[] = [
+        {
+            id: 'mass',
+            label: 'Mass Verification (Pre-launch Weighing)',
+            shortLabel: 'Mass',
+            value: `${totalMass} / ${launch.maxMass} kg`,
+            ok: massOk,
+        },
+        {
+            id: 'volume',
+            label: `Volume & Envelope Verification (${m.volUnitLabel})`,
+            shortLabel: 'Volume',
+            value: `${totalVol} / ${maxAllowedVol} u`,
+            ok: volOk,
+        },
+        {
+            id: 'power',
+            label: `Power Balance at ${m.au} AU (1/R² Law)`,
+            shortLabel: 'Power Balance',
+            value: `${wattsGenerated}W gen vs ${wattsConsumed}W load`,
+            ok: powerOk,
+        },
+        {
+            id: 'instruments',
+            label: 'Instrument & Spectral Compatibility (Goals)',
+            shortLabel: 'Instruments',
+            value: payloadReqOk ? 'All Required Verified' : 'Missing / Wrong Spectrum',
+            ok: payloadReqOk,
+        },
+        {
+            id: 'trajectory',
+            label: 'GMAT Trajectory & Delta-V Budget',
+            shortLabel: 'Trajectory',
+            value: `${prop.dvProvided} km/s`,
+            ok: trajOk,
+        },
+        {
+            id: 'ground',
+            label: 'Ground Segment Downlink Capacity',
+            shortLabel: 'Ground Downlink',
+            value: `${Math.round(groundEff * 100)}% link`,
+            ok: groundOk,
+        },
+        {
+            id: 'user',
+            label: 'User Segment Lab Readiness',
+            shortLabel: 'User Pipeline',
+            value: userOk ? 'Aligned' : 'Mismatched Pipeline',
+            ok: userOk,
+        },
+        {
+            id: 'budget',
+            label: 'NASA SMD Cost Cap Compliance',
+            shortLabel: 'Cost Cap',
+            value: `$${totalCost}M / $${m.budgetLimit}M`,
+            ok: budgetOk,
+        },
+        {
+            id: 'shielding',
+            label: 'Radiation Shielding vs Environment Hazard',
+            shortLabel: 'Radiation Shielding',
+            value: `${bus.shielding}% / ${m.radHazard}% req`,
+            ok: shieldOk,
+        },
+        {
+            id: 'launch',
+            label: 'Launch Vehicle Orbit Compatibility',
+            shortLabel: 'Launch Vehicle',
+            value: launchOk ? 'Compatible' : 'Non-optimal Profile',
+            ok: launchOk,
+        },
     ];
     const totalChecks = checks.length;
-    const checksPassed = checks.filter(Boolean).length;
-    let cmlLevel: 1 | 2 | 3 | 4 = 1;
-    let cmlText = 'JPL CML 1: Initial Idea';
-    let mdlText = 'MDL: Office Hours';
-
-    if (state.stage >= 2) {
-        cmlLevel = 2;
-        cmlText = 'JPL CML 2: Feasibility Concept';
-        mdlText = 'MDL: Concept Development';
-
-        if (checksPassed >= 5) {
-            cmlLevel = 3;
-            cmlText = 'JPL CML 3: Trade Space Explored';
-            mdlText = 'MDL: Trade Studies';
-        }
-        if (checksPassed === totalChecks) {
-            cmlLevel = 4;
-            cmlText = 'JPL CML 4: Point Design Verified';
-            mdlText = 'MDL: Point Design Ready';
-        }
-    }
+    const checksPassed = checks.filter(c => c.ok).length;
+    const cmlLevel = checksPassed === totalChecks ? 4 : checksPassed >= CML3_MIN_CHECKS ? 3 : 2;
 
     return {
         m, launch, prop, power, bus, ground, user, selectedPayloadObjs,
@@ -92,7 +185,7 @@ export function evaluateArchitecture(state: GameState): ArchitectureEval {
         wattsGenerated, wattsConsumed, powerOk,
         missingReqPayloads, incompatiblePayloads, payloadReqOk,
         launchOk, trajOk, groundEff, groundOk, userOk, shieldOk,
-        checksPassed, totalChecks, cmlLevel, cmlText, mdlText
+        checks, checksPassed, totalChecks, cmlLevel,
     };
 }
 
@@ -165,9 +258,9 @@ export function resolveConopsDirective(ev: ArchitectureEval, option: 1 | 2): Con
           };
 }
 
-export function getConfigKey(state: GameState): string {
+export function getConfigKey(config: MissionConfig): string {
     return [
-        state.missionId, state.launchId, state.propulsionId, state.powerId, state.busId,
-        [...state.payloads].sort().join('+'), state.groundId, state.userId,
+        config.missionId, config.launchId, config.propulsionId, config.powerId, config.busId,
+        [...config.payloads].sort().join('+'), config.groundId, config.userId,
     ].join('|');
 }

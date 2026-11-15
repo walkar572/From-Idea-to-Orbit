@@ -14,26 +14,21 @@ export interface LogEntry {
 export interface UseSimulationReturn {
     progress: number;
     phase: number;
-    running: boolean;
     showConops: boolean;
     conopsBonus: number;
     debriefShown: boolean;
     logs: LogEntry[];
     start: () => void;
     resolveConops: (option: 1 | 2) => void;
-    reset: () => void;
 }
 
 const FRAME_MS = 1000 / 60;
 const PROGRESS_PER_MS = 0.0036 / FRAME_MS;
 const MAX_DT_MS = 100;
 
-function drawFrame(
-    canvasRef: RefObject<HTMLCanvasElement | null>,
-    prog: number,
-    ev: ArchitectureEval,
-    vizCamera: VizCamera
-) {
+const timestamp = () => new Date().toLocaleTimeString([], { hour12: false });
+
+function drawFrame(canvasRef: RefObject<HTMLCanvasElement>, prog: number, ev: ArchitectureEval, vizCamera: VizCamera) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const parent = canvas.parentElement;
@@ -56,12 +51,11 @@ function drawFrame(
 export function useSimulation(
     ev: ArchitectureEval,
     vizCamera: VizCamera,
-    canvasRef: RefObject<HTMLCanvasElement | null>,
+    canvasRef: RefObject<HTMLCanvasElement>,
     visible: boolean
 ): UseSimulationReturn {
     const [progress, setProgress] = useState(0);
     const [phase, setPhase] = useState(0);
-    const [running, setRunning] = useState(false);
     const [showConops, setShowConops] = useState(false);
     const [conopsBonus, setConopsBonus] = useState(1.0);
     const [debriefShown, setDebriefShown] = useState(false);
@@ -76,15 +70,18 @@ export function useSimulation(
     const eventTriggeredRef = useRef(false);
     const lastTsRef = useRef<number | null>(null);
 
-    useEffect(() => { evRef.current = ev; }, [ev]);
-    useEffect(() => { vizCameraRef.current = vizCamera; }, [vizCamera]);
+    useEffect(() => {
+        evRef.current = ev;
+    }, [ev]);
+    useEffect(() => {
+        vizCameraRef.current = vizCamera;
+    }, [vizCamera]);
 
     const log = useCallback((msg: string, type: LogType = 'info') => {
-        const ts = new Date().toLocaleTimeString([], { hour12: false });
-        setLogs(prev => [...prev, { ts, msg, type }]);
+        setLogs(prev => [...prev, { ts: timestamp(), msg, type }]);
     }, []);
 
-    const tick=useCallback(() => {
+    const tick = useCallback(() => {
         if (!runningRef.current) return;
         const now = performance.now();
         const dt = lastTsRef.current === null ? FRAME_MS : Math.min(now - lastTsRef.current, MAX_DT_MS);
@@ -109,7 +106,6 @@ export function useSimulation(
             runningRef.current = false;
             phaseRef.current = 2;
             setPhase(2);
-            setRunning(false);
             setShowConops(true);
             log(
                 `[CONOPS CHECKPOINT] ${currentEv.m.conopsEvent.title} — awaiting Flight Director directive...`,
@@ -126,10 +122,7 @@ export function useSimulation(
                 `[GROUND SEGMENT] Downlinking telemetry via ${currentEv.ground.name} (${Math.round(currentEv.groundEff * 100)}% link efficiency).`,
                 currentEv.groundOk ? 'ok' : 'warn'
             );
-            log(
-                `[USER SEGMENT] Delivering samples/data to: ${currentEv.user.name}.`,
-                currentEv.userOk ? 'ok' : 'warn'
-            );
+            log(`[USER SEGMENT] Delivering samples/data to: ${currentEv.user.name}.`, currentEv.userOk ? 'ok' : 'warn');
         }
 
         if (prog >= 1.0) {
@@ -137,7 +130,6 @@ export function useSimulation(
             runningRef.current = false;
             phaseRef.current = 4;
             setPhase(4);
-            setRunning(false);
             setDebriefShown(true);
             setProgress(1.0);
             drawFrame(canvasRef, 1.0, currentEv, vizCameraRef.current);
@@ -159,14 +151,12 @@ export function useSimulation(
 
         setProgress(0);
         setPhase(0);
-        setRunning(true);
         setShowConops(false);
         setConopsBonus(1.0);
         setDebriefShown(false);
-        setLogs([]);
 
         const e = evRef.current;
-        const ts = new Date().toLocaleTimeString([], { hour12: false });
+        const ts = timestamp();
         setLogs([
             {
                 ts,
@@ -194,26 +184,10 @@ export function useSimulation(
 
             runningRef.current = true;
             lastTsRef.current = null;
-            setRunning(true);
             rafRef.current = requestAnimationFrame(tick);
         },
         [log, tick]
     );
-
-    const reset = useCallback(() => {
-        if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        runningRef.current = false;
-        progressRef.current = 0;
-        phaseRef.current = 0;
-        eventTriggeredRef.current = false;
-        setProgress(0);
-        setPhase(0);
-        setRunning(false);
-        setShowConops(false);
-        setConopsBonus(1.0);
-        setDebriefShown(false);
-        setLogs([]);
-    }, []);
 
     useEffect(() => {
         if (!visible) {
@@ -242,8 +216,5 @@ export function useSimulation(
         };
     }, []);
 
-    return {
-        progress, phase, running, showConops, conopsBonus, debriefShown, logs,
-        start, resolveConops, reset,
-    };
+    return { progress, phase, showConops, conopsBonus, debriefShown, logs, start, resolveConops };
 }

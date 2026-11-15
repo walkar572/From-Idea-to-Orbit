@@ -1,16 +1,21 @@
 import { useGame } from '../../context/GameContext';
-import { getLaunchHold } from '../../engine/systemsEngineering';
+import { useToast } from '../../context/ToastContext';
+import { solarFluxPct } from '../../engine/systemsEngineering';
+import { useLaunch } from '../../hooks/useLaunch';
 import type { ArchitectureEval } from '../../types';
+import { firstWord } from '../../utils/format';
 
 interface Props {
     ev: ArchitectureEval;
 }
 
 export function TelemetryBar({ ev }: Props) {
-    const { dispatch, playTone, showToast } = useGame();
+    const { dispatch, playTone } = useGame();
+    const showToast = useToast();
+    const launch = useLaunch();
     const m = ev.m;
 
-    const fluxPct = Math.round(100 / (m.au * m.au));
+    const fluxPct = solarFluxPct(m.au);
 
     const onMDLAuto = () => {
         playTone(920, '16n');
@@ -21,17 +26,6 @@ export function TelemetryBar({ ev }: Props) {
     const onOfficeHours = () => {
         playTone(780, '16n');
         showToast(`NASA MDL Office Hours Advisory: ${m.officeHoursHint}`);
-    };
-
-    const onStartSim = () => {
-        const hold = getLaunchHold(ev);
-        if (hold) {
-            playTone(220, '8n');
-            showToast(hold);
-            return;
-        }
-        playTone(600);
-        dispatch({ type: 'START_SIM' });
     };
 
     const costPct = Math.min(100, Math.round((ev.totalCost / m.budgetLimit) * 100));
@@ -81,7 +75,7 @@ export function TelemetryBar({ ev }: Props) {
                     val={`$${ev.totalCost}M / $${m.budgetLimit}M`}
                     fill={costPct}
                     ok={ev.budgetOk}
-                    color="emerald"
+                    subClassName="text-blue-400"
                     sub={
                         ev.budgetOk
                             ? `Margin: $${m.budgetLimit - ev.totalCost}M`
@@ -93,7 +87,7 @@ export function TelemetryBar({ ev }: Props) {
                     val={`${ev.totalMass} / ${ev.launch.maxMass} kg`}
                     fill={massPct}
                     ok={ev.massOk}
-                    color="cyan"
+                    subClassName="text-blue-300"
                     sub={
                         ev.massOk
                             ? `Margin: +${(ev.launch.maxMass - ev.totalMass).toFixed(1)} kg`
@@ -105,15 +99,16 @@ export function TelemetryBar({ ev }: Props) {
                     val={`${ev.totalVol} / ${ev.maxAllowedVol} units`}
                     fill={volPct}
                     ok={ev.volOk}
-                    color="purple"
-                    sub={ev.volOk ? `Envelope OK (${m.volUnitLabel.split(' ')[0]})` : 'Volume Limit Exceeded!'}
+                    fillClassName="bg-slate-500"
+                    subClassName="text-slate-400"
+                    sub={ev.volOk ? `Envelope OK (${firstWord(m.volUnitLabel)})` : 'Volume Limit Exceeded!'}
                 />
                 <BarCell
                     label="ORBITAL POWER"
                     val={`${ev.wattsConsumed}W / ${ev.wattsGenerated}W`}
                     fill={pwrPct}
                     ok={ev.powerOk}
-                    color="amber"
+                    subClassName="text-slate-300"
                     sub={
                         ev.powerOk
                             ? `Reserve: +${ev.wattsGenerated - ev.wattsConsumed}W at ${m.au} AU`
@@ -123,7 +118,7 @@ export function TelemetryBar({ ev }: Props) {
 
                 <div>
                     <button
-                        onClick={onStartSim}
+                        onClick={launch}
                         className="w-full py-2.5 px-3 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-700 text-slate-950 shadow-lg shadow-blue-500/20"
                     >
                         <i className="fa-solid fa-rocket" />
@@ -135,39 +130,19 @@ export function TelemetryBar({ ev }: Props) {
     );
 }
 
-function BarCell({
-    label,
-    val,
-    fill,
-    ok,
-    color,
-    sub,
-}: {
+interface BarCellProps {
     label: string;
     val: string;
     fill: number;
     ok: boolean;
-    color: 'emerald' | 'cyan' | 'purple' | 'amber';
     sub: string;
-}) {
-    const fillColor = !ok
-        ? 'bg-red-700'
-        : color === 'emerald'
-        ? 'bg-blue-500'
-        : color === 'cyan'
-        ? 'bg-blue-500'
-        : color === 'purple'
-        ? 'bg-slate-500'
-        : 'bg-blue-500';
-    const subColor = !ok
-        ? 'text-red-700 font-bold'
-        : color === 'emerald'
-        ? 'text-blue-400'
-        : color === 'cyan'
-        ? 'text-blue-300'
-        : color === 'purple'
-        ? 'text-slate-400'
-        : 'text-slate-300';
+    fillClassName?: string;
+    subClassName: string;
+}
+
+function BarCell({ label, val, fill, ok, sub, fillClassName = 'bg-blue-500', subClassName }: BarCellProps) {
+    const fillColor = ok ? fillClassName : 'bg-red-700';
+    const subColor = ok ? subClassName : 'text-red-700 font-bold';
 
     return (
         <div className="space-y-1">

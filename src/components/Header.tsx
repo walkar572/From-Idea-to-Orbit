@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useGame } from '../context/GameContext';
-import { evaluateArchitecture, getConfigKey, getLaunchHold } from '../engine/systemsEngineering';
-import type { Stage } from '../types';
+import { CML_LABELS, getConfigKey } from '../engine/systemsEngineering';
+import { useLaunch } from '../hooks/useLaunch';
+import type { CmlLevel, Stage } from '../types';
+import { cmlBadgeClass, toggleClass } from './ui/classes';
 
 interface HeaderProps {
     onOpenDocs: () => void;
@@ -17,8 +19,8 @@ const SE_STEPS = [
 ] as const;
 
 export function Header({ onOpenDocs }: HeaderProps) {
-    const { state, dispatch, muted, toggleMute, playTone, showToast } = useGame();
-    const ev = evaluateArchitecture(state);
+    const { state, ev, dispatch, muted, toggleMute, playTone } = useGame();
+    const launch = useLaunch();
     const headerRef = useRef<HTMLElement>(null);
     useEffect(() => {
         const el = headerRef.current;
@@ -30,29 +32,19 @@ export function Header({ onOpenDocs }: HeaderProps) {
         ro.observe(el);
         return () => ro.disconnect();
     }, []);
+    const flightIsCurrent =
+        state.flownConfig !== null && getConfigKey(state.flownConfig) === getConfigKey(state);
+
     const goToStage = (n: Stage) => {
-        if (n !== 3 || state.flownConfigKey === getConfigKey(state)) {
+        if (n !== 3 || flightIsCurrent) {
             playTone(600);
             dispatch({ type: 'GO_TO_STAGE', stage: n });
             return;
         }
-        const hold = getLaunchHold(ev);
-        if (hold) {
-            playTone(220, '8n');
-            showToast(hold);
-            dispatch({ type: 'GO_TO_STAGE', stage: 2 });
-            return;
-        }
-        playTone(600);
-        dispatch({ type: 'START_SIM' });
+        if (!launch()) dispatch({ type: 'GO_TO_STAGE', stage: 2 });
     };
 
-    const cmlBadgeClass =
-    ev.cmlLevel === 4
-        ? 'bg-blue-500/30 text-blue-200 border-blue-400/60'
-        : ev.cmlLevel === 3
-        ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-        : 'bg-slate-700/60 text-slate-300 border-slate-600';
+    const cmlLevel: CmlLevel = state.stage === 1 ? 1 : ev.cmlLevel;
 
     let activeStepLimit = 1;
     if (state.stage === 1) activeStepLimit = 2;
@@ -60,11 +52,9 @@ export function Header({ onOpenDocs }: HeaderProps) {
     if (state.stage === 3) activeStepLimit = 6;
 
     const stageButtonClass = (n: Stage) =>
-        `px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
+        `px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${toggleClass(
             state.stage === n
-                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
-                : 'text-slate-400 hover:text-white'
-        }`;
+        )}`;
 
     return (
         <header
@@ -83,12 +73,12 @@ export function Header({ onOpenDocs }: HeaderProps) {
                                     NASA SMD // NPR 7123.1
                                 </span>
                                 <span
-                                    className={`font-mono text-[10px] uppercase px-2 py-0.5 rounded border font-bold ${cmlBadgeClass}`}
+                                    className={`font-mono text-[10px] uppercase px-2 py-0.5 rounded border font-bold ${cmlBadgeClass(cmlLevel)}`}
                                 >
-                                    {ev.cmlText}
+                                    {CML_LABELS[cmlLevel].cml}
                                 </span>
                                 <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-slate-700/50 text-slate-400 border border-slate-600 hidden sm:inline">
-                                    {ev.mdlText}
+                                    {CML_LABELS[cmlLevel].mdl}
                                 </span>
                             </div>
                             <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-white">

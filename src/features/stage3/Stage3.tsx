@@ -1,8 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { toggleClass } from '../../components/ui/classes';
+import { StatCell } from '../../components/ui/StatCell';
 import { useGame } from '../../context/GameContext';
-import { evaluateArchitecture } from '../../engine/systemsEngineering';
+import { evaluateArchitecture, solarFluxPct, solarFluxWm2 } from '../../engine/systemsEngineering';
 import { useSimulation } from '../../hooks/useSimulation';
 import type { VizCamera } from '../../types';
+import { firstWord } from '../../utils/format';
 import { MissionVizCanvas } from './MissionVizCanvas';
 import { ConopsModal } from './ConopsModal';
 import { TelemetryLog } from './TelemetryLog';
@@ -28,16 +31,18 @@ interface Stage3Props {
 
 export function Stage3({ visible }: Stage3Props) {
     const { state, dispatch, playTone } = useGame();
-    const ev = evaluateArchitecture(state);
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const flightConfig = state.flownConfig ?? state;
+    const ev = useMemo(() => evaluateArchitecture(flightConfig), [flightConfig]);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
     const sim = useSimulation(ev, state.vizCamera, canvasRef, visible);
+    const startSim = sim.start;
     const lastKeyRef = useRef(state.simRestartKey);
     useEffect(() => {
         if (visible && state.simRestartKey !== lastKeyRef.current) {
             lastKeyRef.current = state.simRestartKey;
-            sim.start();
+            startSim();
         }
-    }, [visible, state.simRestartKey, sim.start]);
+    }, [visible, state.simRestartKey, startSim]);
 
     const setCamera = (camera: VizCamera) => {
         playTone(620);
@@ -45,8 +50,8 @@ export function Stage3({ visible }: Stage3Props) {
     };
 
     const curAu = +(1.0 + (ev.m.au - 1.0) * sim.progress).toFixed(2);
-    const curFlux = Math.round(1361 / (curAu * curAu));
-    const curPct = Math.round(100 / (curAu * curAu));
+    const curFlux = solarFluxWm2(curAu);
+    const curPct = solarFluxPct(curAu);
     const remDv = (ev.prop.dvProvided * (1 - sim.progress * 0.8)).toFixed(2);
     const sciPackets = Math.round(sim.progress * 320 * ev.groundEff);
 
@@ -75,11 +80,7 @@ export function Stage3({ visible }: Stage3Props) {
                                     <button
                                         key={c.key}
                                         onClick={() => setCamera(c.key)}
-                                        className={
-                                            state.vizCamera === c.key
-                                                ? 'px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/40'
-                                                : 'px-2.5 py-1 rounded-lg text-slate-300 hover:text-white'
-                                        }
+                                        className={`px-2.5 py-1 rounded-lg ${toggleClass(state.vizCamera === c.key)}`}
                                     >
                                         <i className={`fa-solid ${c.icon} mr-1`} />
                                         {c.label}
@@ -96,10 +97,14 @@ export function Stage3({ visible }: Stage3Props) {
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3 pt-3 border-t border-slate-800 font-mono text-xs">
-                            <Readout label="GMAT DELTA-V REMAINING" val={`${remDv} km/s`} color="text-blue-300" />
-                            <Readout label="SOLAR FLUX (1/R²)" val={`${curFlux} W/m² (${curPct}%)`} color="text-slate-300" />
-                            <Readout label="GROUND SEGMENT LINK" val={`${Math.round(ev.groundEff * 100)}% (${ev.ground.name.split(' ')[0]})`} color="text-blue-300" />
-                            <Readout label="USER SEGMENT DATA" val={`${sciPackets} packets`} color="text-slate-400" />
+                            <StatCell label="GMAT DELTA-V REMAINING" value={`${remDv} km/s`} valueClassName="text-sm text-blue-300" />
+                            <StatCell label="SOLAR FLUX (1/R²)" value={`${curFlux} W/m² (${curPct}%)`} valueClassName="text-sm text-slate-300" />
+                            <StatCell
+                                label="GROUND SEGMENT LINK"
+                                value={`${Math.round(ev.groundEff * 100)}% (${firstWord(ev.ground.name)})`}
+                                valueClassName="text-sm text-blue-300"
+                            />
+                            <StatCell label="USER SEGMENT DATA" value={`${sciPackets} packets`} valueClassName="text-sm text-slate-400" />
                         </div>
                     </div>
                 </div>
@@ -117,14 +122,5 @@ export function Stage3({ visible }: Stage3Props) {
                 </div>
             </div>
         </section>
-    );
-}
-
-function Readout({ label, val, color }: { label: string; val: string; color: string }) {
-    return (
-        <div className="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-            <span className="text-[10px] text-slate-400 block">{label}</span>
-            <span className={`${color} font-bold text-sm`}>{val}</span>
-        </div>
     );
 }

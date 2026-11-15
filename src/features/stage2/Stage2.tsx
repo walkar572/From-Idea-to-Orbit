@@ -1,5 +1,4 @@
 import { useGame } from '../../context/GameContext';
-import { evaluateArchitecture } from '../../engine/systemsEngineering';
 import { TelemetryBar } from './TelemetryBar';
 import { SegmentTabs } from './SegmentTabs';
 import { VerificationMatrix } from './VerificationMatrix';
@@ -10,8 +9,7 @@ import { GroundPanel } from './panels/GroundPanel';
 import { UserPanel } from './panels/UserPanel';
 
 export function Stage2() {
-    const { state } = useGame();
-    const ev = evaluateArchitecture(state);
+    const { state, ev } = useGame();
 
     return (
         <section className="space-y-5">

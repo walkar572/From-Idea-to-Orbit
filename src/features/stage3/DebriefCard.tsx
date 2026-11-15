@@ -1,3 +1,4 @@
+import { StatCell } from '../../components/ui/StatCell';
 import type { ArchitectureEval } from '../../types';
 
 interface Props {
@@ -24,18 +25,7 @@ export function DebriefCard({ ev, conopsBonus, onBack, onNew }: Props) {
         launchScore * 0.2 + spaceScore * 0.4 + groundScore * 0.2 + userScore * 0.2
     );
     const certified = ev.cmlLevel === 4;
-    const openRequirements = [
-        !ev.budgetOk && 'Cost Cap',
-        !ev.massOk && 'Mass',
-        !ev.volOk && 'Volume',
-        !ev.powerOk && 'Power Balance',
-        !ev.payloadReqOk && 'Instruments',
-        !ev.trajOk && 'Trajectory',
-        !ev.groundOk && 'Ground Downlink',
-        !ev.userOk && 'User Pipeline',
-        !ev.shieldOk && 'Radiation Shielding',
-        !ev.launchOk && 'Launch Vehicle',
-    ].filter(Boolean) as string[];
+    const openRequirements = ev.checks.filter(c => !c.ok).map(c => c.shortLabel);
 
     const verdict =
         totalScore >= 85 && certified
@@ -44,7 +34,7 @@ export function DebriefCard({ ev, conopsBonus, onBack, onNew }: Props) {
             ? { text: 'PARTIAL SUCCESS (REQUIRES ITERATION)', cls: 'text-red-400' }
             : { text: 'MISSION OBJECTIVES NOT MET', cls: 'text-red-400' };
 
-    const scoreColor = (v: number) => (v >= 85 ? 'text-blue-300' : v >= 60 ? 'text-red-400' : 'text-red-400');
+    const scoreColor = (v: number) => (v >= 85 ? 'text-blue-300' : 'text-red-400');
 
     return (
         <div className="glass-panel rounded-2xl p-5 border border-blue-500/40 space-y-4">
@@ -68,10 +58,10 @@ export function DebriefCard({ ev, conopsBonus, onBack, onNew }: Props) {
             </div>
 
             <div className="grid grid-cols-2 gap-2 font-mono text-xs">
-                <ScoreRow label="1. Launch Seg:" val={`${launchScore}%`} color={scoreColor(launchScore)} />
-                <ScoreRow label="2. Space Seg:" val={`${spaceScore}%`} color={scoreColor(spaceScore)} />
-                <ScoreRow label="3. Ground Seg:" val={`${groundScore}%`} color={scoreColor(groundScore)} />
-                <ScoreRow label="4. User Seg:" val={`${userScore}%`} color={scoreColor(userScore)} />
+                <StatCell inline label="1. Launch Seg:" value={`${launchScore}%`} valueClassName={scoreColor(launchScore)} />
+                <StatCell inline label="2. Space Seg:" value={`${spaceScore}%`} valueClassName={scoreColor(spaceScore)} />
+                <StatCell inline label="3. Ground Seg:" value={`${groundScore}%`} valueClassName={scoreColor(groundScore)} />
+                <StatCell inline label="4. User Seg:" value={`${userScore}%`} valueClassName={scoreColor(userScore)} />
             </div>
 
             <div className="p-3.5 rounded-xl bg-blue-950/50 border border-blue-500/30 space-y-1.5 text-xs">
@@ -98,15 +88,6 @@ export function DebriefCard({ ev, conopsBonus, onBack, onNew }: Props) {
                     New Mission
                 </button>
             </div>
-        </div>
-    );
-}
-
-function ScoreRow({ label, val, color }: { label: string; val: string; color: string }) {
-    return (
-        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex justify-between">
-            <span className="text-slate-400">{label}</span>
-            <span className={`font-bold ${color}`}>{val}</span>
         </div>
     );
 }
