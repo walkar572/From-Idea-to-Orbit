@@ -28,6 +28,13 @@ npm run build
 npm run preview
 ```
 
+## Checks
+
+```bash
+npm run lint
+npm test
+```
+
 ## Structure
 
 ```

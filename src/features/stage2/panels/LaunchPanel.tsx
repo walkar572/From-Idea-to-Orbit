@@ -1,24 +1,23 @@
+import { OptionCard } from '../../../components/ui/OptionCard';
 import { useGame } from '../../../context/GameContext';
 import { SEGMENTS_DB } from '../../../data/modules';
 import type { ArchitectureEval } from '../../../types';
+import { SegmentPanelHeader } from './SegmentPanelHeader';
+import { useSegmentSelect } from './useSegmentSelect';
 
 export function LaunchPanel({ ev }: { ev: ArchitectureEval }) {
-    const { state, dispatch, playTone } = useGame();
+    const { state } = useGame();
+    const select = useSegmentSelect();
     const m = ev.m;
 
     return (
         <>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div>
-                    <span className="font-mono text-[10px] uppercase text-blue-400 block">
-                        SEGMENT 1 OF 4 // LAUNCH SEGMENT (NASA WEBINAR PAGES 8, 17, 24)
-                    </span>
-                    <h3 className="text-base font-bold text-white">
-                        Launch Vehicle Selection & Payload Stowage Services
-                    </h3>
-                </div>
-                <span className="font-mono text-xs text-slate-400">Mass & Volume Envelope</span>
-            </div>
+            <SegmentPanelHeader
+                kicker="SEGMENT 1 OF 4 // LAUNCH SEGMENT (NASA WEBINAR PAGES 8, 17, 24)"
+                title="Launch Vehicle Selection & Payload Stowage Services"
+                aside="Mass & Volume Envelope"
+                asideClassName="text-slate-400"
+            />
             <p className="text-xs text-slate-300">
                 The <b>Launch Segment</b> defines the launch vehicle and environmental stowage services required to
                 place your mission in space: from ambient-temperature soft-stowed cargo aboard <b>NG-18 Cygnus</b> to
@@ -29,19 +28,11 @@ export function LaunchPanel({ ev }: { ev: ArchitectureEval }) {
                     const active = lv.id === state.launchId;
                     const rec = lv.allowedMissions.includes(m.id);
                     return (
-                        <button
-                            type="button"
+                        <OptionCard
                             key={lv.id}
-                            aria-pressed={active}
-                            onClick={() => {
-                                playTone(680);
-                                dispatch({ type: 'SET_LAUNCH', id: lv.id });
-                            }}
-                            className={`w-full h-full text-left p-4 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between ${
-                                active
-                                    ? 'border-blue-500 bg-blue-950/40 glow-cyan'
-                                    : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
-                            }`}
+                            selected={active}
+                            onSelect={() => select('launchId', lv.id)}
+                            className="h-full p-4 border-2 flex flex-col justify-between"
                         >
                             <div>
                                 <div className="flex items-center justify-between gap-2">
@@ -63,7 +54,7 @@ export function LaunchPanel({ ev }: { ev: ArchitectureEval }) {
                                 <span className="text-blue-400 font-bold">Cost: ${lv.cost}M</span>
                                 <span className="text-blue-300 font-bold">Max Mass: {lv.maxMass} kg</span>
                             </div>
-                        </button>
+                        </OptionCard>
                     );
                 })}
             </div>

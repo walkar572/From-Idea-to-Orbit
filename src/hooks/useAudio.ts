@@ -1,39 +1,45 @@
 import { useCallback, useRef, useState } from 'react';
-import * as Tone from 'tone';
+import type { PolySynth } from 'tone';
+
+export type PlayTone = (freq?: number, dur?: string) => void;
 
 export interface UseAudioReturn {
-    playTone: (freq?: number, dur?: string) => void;
+    playTone: PlayTone;
     muted: boolean;
     toggleMute: () => void;
 }
 
+let toneModule: Promise<typeof import('tone')> | null = null;
+const loadTone = () => (toneModule ??= import('tone'));
+
 export function useAudio(): UseAudioReturn {
-    const synthRef = useRef<Tone.PolySynth | null>(null);
+    const synthRef = useRef<Promise<PolySynth> | null>(null);
     const mutedRef = useRef(false);
     const [muted, setMuted] = useState(false);
 
-    const playRaw = useCallback((freq: number, dur: string) => {
+    const playRaw = useCallback(async (freq: number, dur: string) => {
         try {
-            if (!synthRef.current) {
+            const Tone = await loadTone();
+            synthRef.current ??= Promise.resolve().then(() => {
                 const synth = new Tone.PolySynth(Tone.Synth, {
                     oscillator: { type: 'triangle' },
                     envelope: { attack: 0.005, decay: 0.08, sustain: 0.04, release: 0.08 },
                 }).toDestination();
                 synth.volume.value = -13;
-                synthRef.current = synth;
-            }
-            if (Tone.context.state !== 'running') {
-                void Tone.start();
-            }
-            synthRef.current.triggerAttackRelease(freq, dur);
-        } catch {
+                return synth;
+            });
+            const synth = await synthRef.current;
+            if (Tone.getContext().state !== 'running') await Tone.start();
+            synth.triggerAttackRelease(freq, dur);
+        } catch (err) {
+            console.warn('Telemetry audio unavailable:', err);
         }
     }, []);
 
-    const playTone = useCallback(
-        (freq: number = 620, dur: string = '32n') => {
+    const playTone = useCallback<PlayTone>(
+        (freq = 620, dur = '32n') => {
             if (mutedRef.current) return;
-            playRaw(freq, dur);
+            void playRaw(freq, dur);
         },
         [playRaw]
     );
@@ -42,7 +48,7 @@ export function useAudio(): UseAudioReturn {
         const next = !mutedRef.current;
         mutedRef.current = next;
         setMuted(next);
-        if (!next) playRaw(880, '32n');
+        if (!next) void playRaw(880, '32n');
     }, [playRaw]);
 
     return { playTone, muted, toggleMute };

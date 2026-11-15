@@ -1,24 +1,23 @@
+import { OptionCard } from '../../../components/ui/OptionCard';
 import { useGame } from '../../../context/GameContext';
 import { SEGMENTS_DB } from '../../../data/modules';
 import type { ArchitectureEval } from '../../../types';
+import { SegmentPanelHeader } from './SegmentPanelHeader';
+import { useSegmentSelect } from './useSegmentSelect';
 
 export function UserPanel({ ev }: { ev: ArchitectureEval }) {
-    const { state, dispatch, playTone } = useGame();
+    const { state } = useGame();
+    const select = useSegmentSelect();
     const m = ev.m;
 
     return (
         <>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div>
-                    <span className="font-mono text-[10px] uppercase text-blue-400 block">
-                        SEGMENT 4 OF 4 // USER SEGMENT ("BEGIN WITH THE END IN MIND", PAGES 15 & 18)
-                    </span>
-                    <h3 className="text-base font-bold text-white">
-                        Sample Processing, Scientific Analysis & Peer-Reviewed Publication
-                    </h3>
-                </div>
-                <span className="font-mono text-xs text-slate-400">End Science Product</span>
-            </div>
+            <SegmentPanelHeader
+                kicker={'SEGMENT 4 OF 4 // USER SEGMENT ("BEGIN WITH THE END IN MIND", PAGES 15 & 18)'}
+                title="Sample Processing, Scientific Analysis & Peer-Reviewed Publication"
+                aside="End Science Product"
+                asideClassName="text-slate-400"
+            />
             <p className="text-xs text-slate-300">
                 As highlighted on Pages 15 and 18 of Julie Levri's NASA presentation:{' '}
                 <i>
@@ -29,22 +28,13 @@ export function UserPanel({ ev }: { ev: ArchitectureEval }) {
             </p>
             <div className="grid grid-cols-1 gap-3">
                 {SEGMENTS_DB.userSegments.map(us => {
-                    const active = us.id === state.userId;
                     const isBest = us.bestFor === m.id;
                     return (
-                        <button
-                            type="button"
+                        <OptionCard
                             key={us.id}
-                            aria-pressed={active}
-                            onClick={() => {
-                                playTone(680);
-                                dispatch({ type: 'SET_USER', id: us.id });
-                            }}
-                            className={`w-full text-left p-4 rounded-xl border transition cursor-pointer ${
-                                active
-                                    ? 'border-blue-500 bg-blue-950/40 glow-cyan'
-                                    : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
-                            }`}
+                            selected={us.id === state.userId}
+                            onSelect={() => select('userId', us.id)}
+                            className="p-4 border"
                         >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                                 <span className="font-bold text-white text-sm">{us.name}</span>
@@ -62,7 +52,7 @@ export function UserPanel({ ev }: { ev: ArchitectureEval }) {
                                 </div>
                             </div>
                             <p className="text-xs text-slate-400 mt-2 leading-relaxed">{us.desc}</p>
-                        </button>
+                        </OptionCard>
                     );
                 })}
             </div>

@@ -1,3 +1,4 @@
+import { toggleClass } from '../../components/ui/classes';
 import { useGame } from '../../context/GameContext';
 import type { SegmentTab } from '../../types';
 
@@ -22,11 +23,7 @@ export function SegmentTabs() {
                             playTone(580);
                             dispatch({ type: 'SET_SEGMENT_TAB', tab: t.key });
                         }}
-                        className={`p-2.5 rounded-xl text-left transition border ${
-                            active
-                                ? 'bg-blue-500/20 border-blue-500/50 text-blue-200'
-                                : 'border-transparent text-slate-400 hover:text-white'
-                        }`}
+                        className={`p-2.5 rounded-xl text-left transition ${toggleClass(active)}`}
                     >
                         <div className="flex items-center justify-between text-xs font-mono font-bold">
                             <span>

@@ -1,10 +1,11 @@
+import { toggleClass } from '../../components/ui/classes';
 import { useGame } from '../../context/GameContext';
 import { NASA_MISSIONS } from '../../data/missions';
 import type { SMD } from '../../types';
 import { MissionCard } from './MissionCard';
 
 const FILTERS: { key: SMD; label: string }[] = [
-    { key: 'ALL', label: 'All Missions (4)' },
+    { key: 'ALL', label: `All Missions (${NASA_MISSIONS.length})` },
     { key: 'BPS', label: 'Biological & ISS' },
     { key: 'HELIO', label: 'Heliophysics' },
     { key: 'PLANET', label: 'Planetary Science' },
@@ -48,11 +49,7 @@ export function Stage1() {
                         <button
                             key={f.key}
                             onClick={() => onFilter(f.key)}
-                            className={
-                                state.smdFilter === f.key
-                                    ? 'px-3 py-1.5 rounded-lg text-xs font-mono bg-blue-500/20 text-blue-300 border border-blue-500/40 font-bold'
-                                    : 'px-3 py-1.5 rounded-lg text-xs font-mono text-slate-400 hover:text-white'
-                            }
+                            className={`px-3 py-1.5 rounded-lg text-xs font-mono ${toggleClass(state.smdFilter === f.key)}`}
                         >
                             {f.label}
                         </button>

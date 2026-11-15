@@ -47,7 +47,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             cost: 10,
             mass: 4,
             dvProvided: 0.4,
-            timeMonths: 1,
             bestFor: ['bionutrients'],
             desc: 'Automated ISS docking and cold-stowage return of frozen MELFI experiment bags back to Earth scientists.'
         },
@@ -57,7 +56,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             cost: 18,
             mass: 28,
             dvProvided: 1.2,
-            timeMonths: 3,
             bestFor: ['punch'],
             desc: 'Precisely phases 4 SmallSats along the day/night terminator orbit for continuous 3D solar corona coverage.'
         },
@@ -67,7 +65,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             cost: 65,
             mass: 165,
             dvProvided: 11.5,
-            timeMonths: 42,
             bestFor: ['dawn'],
             desc: 'Record 11.5 km/s Delta-V capability! The only propulsion architecture able to orbit Vesta, escape, and orbit Ceres.'
         },
@@ -77,7 +74,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             cost: 55,
             mass: 390,
             dvProvided: 7.8,
-            timeMonths: 36,
             bestFor: ['europa', 'dawn'],
             desc: 'High-energy interplanetary transfer trajectory with planetary orbital insertion and tour flybys.'
         }
@@ -174,7 +170,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             mass: 3,
             vol: 90,
             power: 10,
-            sciPoints: 180,
             icon: 'fa-seedling',
             desc: '12+ replicate 3mil FEP bags (P/N 110596-002) with dehydrated yeast spores and growth media for beta-carotene synthesis (PDF Page 18 & 20).'
         },
@@ -186,7 +181,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             mass: 8,
             vol: 60,
             power: 45,
-            sciPoints: 170,
             icon: 'fa-snowflake',
             desc: 'Maintains 30°C yeast incubation for 48 hours followed by rapid -80°C freezing in MELFI (PDF Page 16).'
         },
@@ -198,7 +192,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             mass: 35,
             vol: 4,
             power: 40,
-            sciPoints: 175,
             icon: 'fa-sun',
             desc: 'Blocks blinding photospheric glare to image the outer solar corona continuously (PUNCH mission).'
         },
@@ -210,7 +203,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             mass: 55,
             vol: 4,
             power: 65,
-            sciPoints: 195,
             icon: 'fa-eye',
             desc: 'Measures polarized Thomson-scattered light from solar wind electrons across 3D space.'
         },
@@ -222,7 +214,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             mass: 85,
             vol: 180,
             power: 55,
-            sciPoints: 190,
             icon: 'fa-camera-retro',
             desc: 'Maps surface geology, craters, and hydrated minerals on Vesta and Ceres (Dawn mission).'
         },
@@ -234,7 +225,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             mass: 75,
             vol: 160,
             power: 45,
-            sciPoints: 185,
             icon: 'fa-atom',
             desc: 'Detects subsurface hydrogen (water ice), iron, and potassium elemental abundances.'
         },
@@ -246,7 +236,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             mass: 165,
             vol: 380,
             power: 95,
-            sciPoints: 230,
             icon: 'fa-wave-square',
             desc: "Sounds Europa's icy shell from surface down to 30 km depth to locate the liquid ocean interface."
         },
@@ -258,7 +247,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             mass: 55,
             vol: 140,
             power: 35,
-            sciPoints: 175,
             icon: 'fa-magnet',
             desc: "Measures induced magnetic fields to determine Europa's subsurface ocean depth and salinity."
         },
@@ -270,7 +258,6 @@ export const SEGMENTS_DB: SegmentsDB = {
             mass: 65,
             vol: 150,
             power: 45,
-            sciPoints: 165,
             icon: 'fa-temperature-arrow-up',
             desc: 'Scans for warm ice fractures and active cryovolcanic water vapor plumes.'
         }
