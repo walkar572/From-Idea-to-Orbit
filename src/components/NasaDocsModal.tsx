@@ -82,7 +82,6 @@ export function NasaDocsModal({ open, onClose }: NasaDocsModalProps) {
                         </p>
                     </div>
                 </div>
-
                 <div className="pt-2 text-right">
                     <button
                         onClick={onClose}
