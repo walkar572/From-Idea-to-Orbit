@@ -93,3 +93,5 @@ export function MissionCard({ mission: m, selected }: MissionCardProps) {
         </div>
     );
 }
+
+// May our code work without bugs
