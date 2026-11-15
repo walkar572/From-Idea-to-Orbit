@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import type { ArchitectureEval, VizCamera } from '../types';
 import { renderMissionVizCanvas } from '../engine/gmatSimulator';
+import { resolveConopsDirective } from '../engine/systemsEngineering';
 
 export type LogType = 'info' | 'ok' | 'warn' | 'err';
 
@@ -16,7 +17,6 @@ export interface UseSimulationReturn {
     running: boolean;
     showConops: boolean;
     conopsBonus: number;
-    hullHealth: number;
     debriefShown: boolean;
     logs: LogEntry[];
     start: () => void;
@@ -40,13 +40,17 @@ function drawFrame(
     if (!parent) return;
     const rect = parent.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
-    const targetW = Math.floor(rect.width);
-    const targetH = Math.floor(rect.height);
+    const cssW = Math.floor(rect.width);
+    const cssH = Math.floor(rect.height);
+    const dpr = window.devicePixelRatio || 1;
+    const targetW = Math.round(cssW * dpr);
+    const targetH = Math.round(cssH * dpr);
     if (canvas.width !== targetW) canvas.width = targetW;
     if (canvas.height !== targetH) canvas.height = targetH;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    renderMissionVizCanvas(ctx, canvas.width, canvas.height, prog, ev, vizCamera);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    renderMissionVizCanvas(ctx, cssW, cssH, prog, ev, vizCamera);
 }
 
 export function useSimulation(
@@ -60,7 +64,6 @@ export function useSimulation(
     const [running, setRunning] = useState(false);
     const [showConops, setShowConops] = useState(false);
     const [conopsBonus, setConopsBonus] = useState(1.0);
-    const [hullHealth, setHullHealth] = useState(100);
     const [debriefShown, setDebriefShown] = useState(false);
     const [logs, setLogs] = useState<LogEntry[]>([]);
 
@@ -159,7 +162,6 @@ export function useSimulation(
         setRunning(true);
         setShowConops(false);
         setConopsBonus(1.0);
-        setHullHealth(100);
         setDebriefShown(false);
         setLogs([]);
 
@@ -184,32 +186,11 @@ export function useSimulation(
     const resolveConops = useCallback(
         (option: 1 | 2) => {
             if (runningRef.current) return;
-            const e = evRef.current;
             setShowConops(false);
 
-            if (option === 1) {
-                if (e.bus.shielding >= e.m.radHazard) {
-                    setConopsBonus(1.1);
-                    log(
-                        `[DIRECTIVE EXECUTED] Nominal Protocol A completed. Bus shielding (${e.bus.shielding}%) protected all payloads; 100% science yield achieved!`,
-                        'ok'
-                    );
-                } else {
-                    const dmg = e.m.radHazard - e.bus.shielding;
-                    setHullHealth(Math.max(40, 100 - dmg));
-                    setConopsBonus(0.75);
-                    log(
-                        `[DIRECTIVE EXECUTED] Insufficient shielding (${e.bus.shielding}% < ${e.m.radHazard}%) caused partial sample/sensor degradation (-${dmg}%).`,
-                        'err'
-                    );
-                }
-            } else {
-                setConopsBonus(0.85);
-                log(
-                    `[DIRECTIVE EXECUTED] Conservative Protocol B completed. Hardware preserved at 100%, science data volume at 85%.`,
-                    'warn'
-                );
-            }
+            const outcome = resolveConopsDirective(evRef.current, option);
+            setConopsBonus(outcome.scienceYield);
+            log(outcome.message, outcome.severity);
 
             runningRef.current = true;
             lastTsRef.current = null;
@@ -230,7 +211,6 @@ export function useSimulation(
         setRunning(false);
         setShowConops(false);
         setConopsBonus(1.0);
-        setHullHealth(100);
         setDebriefShown(false);
         setLogs([]);
     }, []);
@@ -263,7 +243,7 @@ export function useSimulation(
     }, []);
 
     return {
-        progress, phase, running, showConops, conopsBonus, hullHealth, debriefShown, logs,
+        progress, phase, running, showConops, conopsBonus, debriefShown, logs,
         start, resolveConops, reset,
     };
 }

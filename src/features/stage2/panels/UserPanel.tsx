@@ -32,13 +32,15 @@ export function UserPanel({ ev }: { ev: ArchitectureEval }) {
                     const active = us.id === state.userId;
                     const isBest = us.bestFor === m.id;
                     return (
-                        <div
+                        <button
+                            type="button"
                             key={us.id}
+                            aria-pressed={active}
                             onClick={() => {
                                 playTone(680);
                                 dispatch({ type: 'SET_USER', id: us.id });
                             }}
-                            className={`p-4 rounded-xl border transition cursor-pointer ${
+                            className={`w-full text-left p-4 rounded-xl border transition cursor-pointer ${
                                 active
                                     ? 'border-blue-500 bg-blue-950/40 glow-cyan'
                                     : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
@@ -60,7 +62,7 @@ export function UserPanel({ ev }: { ev: ArchitectureEval }) {
                                 </div>
                             </div>
                             <p className="text-xs text-slate-400 mt-2 leading-relaxed">{us.desc}</p>
-                        </div>
+                        </button>
                     );
                 })}
             </div>

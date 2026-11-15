@@ -17,7 +17,7 @@ export function CadBlueprint({ ev }: { ev: ArchitectureEval }) {
                 <rect x="215" y="112" width="18" height="24" rx="2" fill="#00e676" />
                 <circle cx="145" cy="105" r="14" fill="rgba(255,184,0,0.4)" stroke="#ffb800" strokeWidth="1.5" />
                 <text x="145" y="109" textAnchor="middle" fill="#ffffff" fontFamily="JetBrains Mono" fontSize="9">Yeast 30mL</text>
-                <text x="75" y="166" fill="#00f0ff" fontFamily="JetBrains Mono" fontSize="10">P/N 110596-002 | FEP 3mil | Vol: {ev.totalVol}/300 mL</text>
+                <text x="75" y="166" fill="#00f0ff" fontFamily="JetBrains Mono" fontSize="10">P/N 110596-002 | FEP 3mil | Vol: {ev.totalVol}/{ev.maxAllowedVol} mL</text>
             </svg>
         );
     } else if (m.id === 'punch') {

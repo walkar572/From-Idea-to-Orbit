@@ -8,6 +8,6 @@ export default defineConfig({
         open: true,
     },
     preview: {
-        allowedHosts: ['space-lzgl.onrender.com']
+        allowedHosts: ['space-lzgl.onrender.com', 'from-idea-to-orbit-bjqs.onrender.com']
     }
 });

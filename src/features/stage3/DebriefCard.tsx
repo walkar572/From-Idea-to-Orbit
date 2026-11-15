@@ -8,15 +8,14 @@ interface Props {
 }
 
 export function DebriefCard({ ev, conopsBonus, onBack, onNew }: Props) {
-    const launchScore =
-        ev.massOk && ev.volOk && ev.launch.allowedMissions.includes(ev.m.id) ? 100 : 65;
+    const launchScore = ev.massOk && ev.volOk && ev.launchOk ? 100 : 65;
 
     let spaceScore = 100;
     if (!ev.powerOk) spaceScore -= 30;
     if (!ev.payloadReqOk) spaceScore -= 35;
     if (!ev.trajOk) spaceScore -= 25;
     if (!ev.shieldOk) spaceScore -= 15;
-    spaceScore = Math.max(20, Math.round(spaceScore * Math.min(1, conopsBonus)));
+    spaceScore = Math.max(20, Math.round(spaceScore * conopsBonus));
 
     const groundScore = Math.round(ev.groundEff * 100);
     const userScore = ev.userOk ? 100 : 50;
@@ -35,6 +34,7 @@ export function DebriefCard({ ev, conopsBonus, onBack, onNew }: Props) {
         !ev.groundOk && 'Ground Downlink',
         !ev.userOk && 'User Pipeline',
         !ev.shieldOk && 'Radiation Shielding',
+        !ev.launchOk && 'Launch Vehicle',
     ].filter(Boolean) as string[];
 
     const verdict =
